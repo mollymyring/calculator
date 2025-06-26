@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fee Calculator - NSNF, HWH, PP (Gradual HWH Discount)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        label { font-weight: bold; display: block; margin-bottom: 10px; }
+        input[type="number"], input[type="range"] { width: 300px; padding: 5px; }
+        button { padding: 10px 15px; font-size: 16px; margin-top: 10px; }
+        table { margin-top: 30px; width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .savings { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>House Value Fee Calculator</h1>
+    <form onsubmit="event.preventDefault(); calculate();">
+        <label for="houseValue">Enter House Value (£):</label>
+        <input type="number" id="houseValue" required min="60000" step="1000">
+
+        <label for="hwhPercent">HWH - Choose % to Pay Upfront: <output id="hwhPercentVal">20</output>%</label>
+        <input type="range" id="hwhPercent" min="0" max="100" step="5" value="20"
+               oninput="document.getElementById('hwhPercentVal').value = this.value">
+
+        <button type="submit">Calculate</button>
+    </form>
+
+    <div id="results" style="display:none;">
+        <h2>Fee Breakdown (All Fees + VAT)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Description</th>
+                    <th>Total Cost (£)</th>
+                    <th>Savings vs. NSNF</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>NSNF</td>
+                    <td>1% of sale price + VAT</td>
+                    <td id="opt1"></td>
+                    <td>–</td>
+                </tr>
+                <tr>
+                    <td>HWH</td>
+                    <td>Base 0.85% minus discount tied to upfront % + VAT</td>
+                    <td id="opt2"></td>
+                    <td class="savings" id="save2"></td>
+                </tr>
+                <tr>
+                    <td>PP</td>
+                    <td>0.7% upfront + VAT</td>
+                    <td id="opt3"></td>
+                    <td class="savings" id="save3"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function calculate() {
+            const value = parseFloat(document.getElementById('houseValue').value);
+            const hwhPercent = parseFloat(document.getElementById('hwhPercent').value);
+
+            // NSNF: 1% + VAT
+            const nsnf_base = value * 0.01;
+            const nsnf_total = nsnf_base * 1.2;
+
+            // HWH: Base 0.85% minus gradual discount up to 0.15%
+            const max_discount = 0.0015; // 0.15%
+            const discount_rate = max_discount * (hwhPercent / 100);
+            const effective_rate = 0.0085 - discount_rate;
+
+            const hwh_base_total = value * effective_rate;
+            const hwh_upfront = hwh_base_total * (hwhPercent / 100);
+            const hwh_remaining = hwh_base_total - hwh_upfront;
+            const hwh_total = hwh_base_total * 1.2;
+
+            // PP: 0.6% + VAT
+            const pp_base = value * 0.007;
+            const pp_total = pp_base * 1.2;
+
+            // Savings
+            const save2 = nsnf_total - hwh_total;
+            const save3 = nsnf_total - pp_total;
+
+            // Display
+            document.getElementById('opt1').innerText = `£${nsnf_total.toFixed(2)}`;
+            document.getElementById('opt2').innerText = `£${hwh_total.toFixed(2)} (Upfront: £${hwh_upfront.toFixed(2)}, Completion: £${hwh_remaining.toFixed(2)})`;
+            document.getElementById('opt3').innerText = `£${pp_total.toFixed(2)}`;
+            document.getElementById('save2').innerText = `£${save2.toFixed(2)}`;
+            document.getElementById('save3').innerText = `£${save3.toFixed(2)}`;
+
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
